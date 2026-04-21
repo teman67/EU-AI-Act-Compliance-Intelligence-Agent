@@ -108,6 +108,13 @@ cp .env.example .env
 
 Get a free Tavily key at [app.tavily.com](https://app.tavily.com).
 
+Optional API hardening settings:
+
+```bash
+CORS_ALLOW_ORIGINS=http://localhost:3000,http://localhost:8501
+LOG_LEVEL=INFO
+```
+
 ### 3. Build the vector store (run once)
 
 ```bash
@@ -186,6 +193,10 @@ pre-commit run --all-files
   "latency_seconds": 3.21
 }
 ```
+
+Notes:
+- API responses include an `X-Request-ID` header for request tracing.
+- Internal server errors return a generic message (no raw exception leakage).
 
 ---
 

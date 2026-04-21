@@ -12,6 +12,8 @@ def test_health_check() -> None:
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+    assert response.json()["version"] == "1.0.0"
+    assert response.headers.get("X-Request-ID")
 
 
 def test_query_rejects_blank_question() -> None:
@@ -42,6 +44,7 @@ def test_query_success(monkeypatch) -> None:
     assert payload["answer"].startswith("High-risk AI systems")
     assert payload["web_search_used"] is False
     assert payload["steps"] == ["retrieved", "generated"]
+    assert response.headers.get("X-Request-ID")
 
 
 def test_query_surfaces_agent_error(monkeypatch) -> None:
@@ -56,4 +59,5 @@ def test_query_surfaces_agent_error(monkeypatch) -> None:
     )
 
     assert response.status_code == 500
-    assert response.json()["detail"] == "simulated failure"
+    assert response.json()["detail"] == "Internal server error. Please try again later."
+    assert response.headers.get("X-Request-ID")
