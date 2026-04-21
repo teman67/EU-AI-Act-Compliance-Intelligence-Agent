@@ -1,0 +1,18 @@
+# Environment
+.env
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Data & vector store
+data/*.pdf
+chroma_db/
+
+# IDE
+.vscode/
+.idea/
+
+# Build
+dist/
+*.egg-info/
