@@ -10,7 +10,6 @@ Run with:
 """
 
 import time
-from typing import List, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -42,14 +41,13 @@ app.add_middleware(
 # Schemas
 # ---------------------------------------------------------------------------
 
+
 class QueryRequest(BaseModel):
     question: str
 
     model_config = {
         "json_schema_extra": {
-            "examples": [
-                {"question": "What are the obligations for high-risk AI systems?"}
-            ]
+            "examples": [{"question": "What are the obligations for high-risk AI systems?"}]
         }
     }
 
@@ -57,7 +55,7 @@ class QueryRequest(BaseModel):
 class QueryResponse(BaseModel):
     question: str
     answer: str
-    steps: List[str]
+    steps: list[str]
     web_search_used: bool
     latency_seconds: float
 
@@ -65,6 +63,7 @@ class QueryResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
 
 @app.get("/health")
 def health():
@@ -99,7 +98,7 @@ def query(request: QueryRequest):
     try:
         final_state = rag_agent.invoke(initial_state)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     latency = round(time.perf_counter() - start, 2)
 

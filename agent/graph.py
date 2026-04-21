@@ -37,7 +37,6 @@ Graph flow (Adaptive + Corrective RAG pattern):
 
 from langgraph.graph import END, START, StateGraph
 
-from agent.state import GraphState
 from agent.nodes import (
     generate,
     grade_documents,
@@ -47,6 +46,7 @@ from agent.nodes import (
     route_question,
     web_search,
 )
+from agent.state import GraphState
 
 
 def build_graph() -> StateGraph:
@@ -58,7 +58,7 @@ def build_graph() -> StateGraph:
     # Register nodes
     # ------------------------------------------------------------------
     graph.add_node("retrieve", retrieve)
-    graph.add_node("web_search", web_search)
+    graph.add_node("web_search_node", web_search)
     graph.add_node("grade_documents", grade_documents)
     graph.add_node("generate", generate)
     graph.add_node("increment_retries", increment_retries)
@@ -71,7 +71,7 @@ def build_graph() -> StateGraph:
         route_question,
         {
             "vectorstore": "retrieve",
-            "web_search": "web_search",
+            "web_search": "web_search_node",
         },
     )
 
@@ -87,7 +87,7 @@ def build_graph() -> StateGraph:
         "grade_documents",
         lambda state: "web_search" if state.get("web_search") == "Yes" else "generate",
         {
-            "web_search": "web_search",
+            "web_search": "web_search_node",
             "generate": "generate",
         },
     )
@@ -95,7 +95,7 @@ def build_graph() -> StateGraph:
     # ------------------------------------------------------------------
     # Web search always leads to generation
     # ------------------------------------------------------------------
-    graph.add_edge("web_search", "generate")
+    graph.add_edge("web_search_node", "generate")
 
     # ------------------------------------------------------------------
     # After generation → quality check (conditional)
@@ -106,7 +106,7 @@ def build_graph() -> StateGraph:
         {
             "useful": END,
             "regenerate": "increment_retries",
-            "web_search": "web_search",
+            "web_search": "web_search_node",
         },
     )
 

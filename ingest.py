@@ -14,24 +14,21 @@ What it does:
 
 import os
 import sys
-import requests
 from pathlib import Path
 
+import requests
+from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from dotenv import load_dotenv
 
 load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-EU_AI_ACT_URL = (
-    "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/"
-    "?uri=OJ:L_202401689"
-)
+EU_AI_ACT_URL = "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/" "?uri=OJ:L_202401689"
 PDF_PATH = Path("./data/eu_ai_act.pdf")
 CHROMA_DIR = "./chroma_db"
 CHUNK_SIZE = 1000
@@ -45,7 +42,7 @@ def download_pdf(url: str, dest: Path) -> None:
         return
 
     dest.parent.mkdir(parents=True, exist_ok=True)
-    print(f"⬇️   Downloading EU AI Act from EUR-Lex...")
+    print("⬇️   Downloading EU AI Act from EUR-Lex...")
     response = requests.get(url, timeout=60)
     response.raise_for_status()
     dest.write_bytes(response.content)

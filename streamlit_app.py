@@ -27,7 +27,8 @@ st.set_page_config(
 # ---------------------------------------------------------------------------
 # Custom CSS
 # ---------------------------------------------------------------------------
-st.markdown("""
+st.markdown(
+    """
 <style>
     .main-header {
         font-size: 2rem;
@@ -62,7 +63,9 @@ st.markdown("""
         text-align: center;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -125,10 +128,12 @@ def check_setup() -> bool:
 # ---------------------------------------------------------------------------
 # Main UI
 # ---------------------------------------------------------------------------
-st.markdown('<div class="main-header">⚖️ EU AI Act Compliance Intelligence</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="main-header">⚖️ EU AI Act Compliance Intelligence</div>', unsafe_allow_html=True
+)
 st.markdown(
     '<div class="sub-header">Ask anything about the EU Artificial Intelligence Act. '
-    'Powered by a self-correcting LangGraph RAG agent with adaptive retrieval.</div>',
+    "Powered by a self-correcting LangGraph RAG agent with adaptive retrieval.</div>",
     unsafe_allow_html=True,
 )
 

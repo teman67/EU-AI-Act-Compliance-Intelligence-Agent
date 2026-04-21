@@ -1,5 +1,5 @@
-from typing import List, TypedDict, Annotated
 import operator
+from typing import Annotated, TypedDict
 
 
 class GraphState(TypedDict):
@@ -14,9 +14,10 @@ class GraphState(TypedDict):
         steps:      Accumulated list of agent steps for tracing/UI display.
         retries:    Number of generation retry attempts made.
     """
+
     question: str
     generation: str
     web_search: str
-    documents: List[str]
-    steps: Annotated[List[str], operator.add]
+    documents: list[str]
+    steps: Annotated[list[str], operator.add]
     retries: int
