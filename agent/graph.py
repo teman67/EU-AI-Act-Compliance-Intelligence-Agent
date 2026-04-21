@@ -49,7 +49,7 @@ from agent.nodes import (
 from agent.state import GraphState
 
 
-def build_graph() -> StateGraph:
+def build_graph():
     """Construct and compile the RAG agent graph."""
 
     graph = StateGraph(GraphState)

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from agent import nodes
+from agent.state import GraphState
 
 
 @dataclass
@@ -32,7 +33,7 @@ class FakeLLM:
         return FakeStructuredInvoker(self.responses[schema.__name__])
 
 
-def make_state(**overrides: Any) -> dict[str, Any]:
+def make_state(**overrides: Any) -> GraphState:
     state: dict[str, Any] = {
         "question": "What are provider obligations?",
         "generation": "",
@@ -42,7 +43,7 @@ def make_state(**overrides: Any) -> dict[str, Any]:
         "retries": 0,
     }
     state.update(overrides)
-    return state
+    return cast(GraphState, state)
 
 
 def test_retrieve_maps_docs_to_text(monkeypatch) -> None:

@@ -5,7 +5,7 @@ Each function receives the current GraphState and returns a dict of
 state updates to merge back in.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.vectorstores import Chroma
@@ -89,7 +89,7 @@ def route_question(state: GraphState) -> str:
     """
     llm = _get_llm().with_structured_output(RouteQuery)
     chain = ROUTER_PROMPT | llm
-    result: RouteQuery = chain.invoke({"question": state["question"]})
+    result = cast(RouteQuery, chain.invoke({"question": state["question"]}))
     return result.datasource  # "vectorstore" or "web_search"
 
 
@@ -143,11 +143,14 @@ def grade_documents(state: GraphState) -> dict[str, Any]:
 
     relevant_docs = []
     for doc in state["documents"]:
-        result: GradeDocuments = chain.invoke(
-            {
-                "document": doc,
-                "question": state["question"],
-            }
+        result = cast(
+            GradeDocuments,
+            chain.invoke(
+                {
+                    "document": doc,
+                    "question": state["question"],
+                }
+            ),
         )
         if result.binary_score == "yes":
             relevant_docs.append(doc)
@@ -206,11 +209,14 @@ def grade_generation(state: GraphState) -> str:
 
     # --- Hallucination check ---
     hall_grader = HALLUCINATION_GRADER_PROMPT | llm.with_structured_output(GradeHallucinations)
-    hall_result: GradeHallucinations = hall_grader.invoke(
-        {
-            "documents": "\n\n".join(state["documents"]),
-            "generation": state["generation"],
-        }
+    hall_result = cast(
+        GradeHallucinations,
+        hall_grader.invoke(
+            {
+                "documents": "\n\n".join(state["documents"]),
+                "generation": state["generation"],
+            }
+        ),
     )
 
     if hall_result.binary_score == "no":
@@ -220,11 +226,14 @@ def grade_generation(state: GraphState) -> str:
 
     # --- Answer quality check ---
     ans_grader = ANSWER_GRADER_PROMPT | llm.with_structured_output(GradeAnswer)
-    ans_result: GradeAnswer = ans_grader.invoke(
-        {
-            "question": state["question"],
-            "generation": state["generation"],
-        }
+    ans_result = cast(
+        GradeAnswer,
+        ans_grader.invoke(
+            {
+                "question": state["question"],
+                "generation": state["generation"],
+            }
+        ),
     )
 
     if ans_result.binary_score == "yes":

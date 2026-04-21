@@ -1,0 +1,24 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["chroma_db"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+files = ["agent", "api.py", "ingest.py", "streamlit_app.py", "tests"]
+ignore_missing_imports = true
+check_untyped_defs = true
+pretty = true
+exclude = "(chroma_db/|data/)"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
