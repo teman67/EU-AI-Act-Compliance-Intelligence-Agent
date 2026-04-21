@@ -99,7 +99,7 @@ with st.sidebar:
 
     for q in example_questions:
         if st.button(q, use_container_width=True, key=q):
-            st.session_state["prefill"] = q
+            st.session_state["question_input"] = q
 
     st.divider()
     st.markdown(
@@ -143,12 +143,9 @@ if not check_setup():
 # Import agent only after setup check passes
 from agent.graph import rag_agent  # noqa: E402
 
-# Pre-fill from sidebar button click
-default_q = st.session_state.pop("prefill", "")
-
 question = st.text_area(
     "Your question:",
-    value=default_q,
+    key="question_input",
     placeholder="e.g. What obligations do providers of high-risk AI systems have?",
     height=80,
 )

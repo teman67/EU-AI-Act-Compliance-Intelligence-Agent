@@ -59,6 +59,10 @@ say so explicitly — do not fabricate details.
 When referencing specific requirements, mention the relevant Article or Recital
 if identifiable from the context.
 
+Do NOT offer follow-up suggestions, ask if the user wants more information,
+or add closing remarks such as "Let me know if..." or "If you want, I can also...".
+End your answer after the last relevant point.
+
 Context:
 {context}""",
         ),

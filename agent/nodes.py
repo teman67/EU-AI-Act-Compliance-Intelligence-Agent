@@ -77,7 +77,7 @@ class GradeAnswer(BaseModel):
 
 
 def _get_llm() -> ChatOpenAI:
-    return ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    return ChatOpenAI(model="gpt-5.4-mini", temperature=0)
 
 
 def _get_chroma_settings() -> Settings:
