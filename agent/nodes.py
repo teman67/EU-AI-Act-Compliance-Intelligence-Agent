@@ -5,10 +5,13 @@ Each function receives the current GraphState and returns a dict of
 state updates to merge back in.
 """
 
+import os
 from typing import Any, cast
 
+import chromadb
+from chromadb.config import Settings
+from langchain_chroma import Chroma
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_community.vectorstores import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from pydantic import BaseModel, Field
@@ -21,6 +24,20 @@ from agent.prompts import (
     ROUTER_PROMPT,
 )
 from agent.state import GraphState
+
+# Force-disable Chroma product telemetry globally for this process.
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+
+# chromadb 0.5.x calls posthog.capture(user_id, event_name, props) — the old
+# 3-positional-arg API — but posthog 3+ changed the signature to capture(event, **kwargs).
+# That mismatch produces noisy error logs.  Patch _direct_capture to a no-op so
+# telemetry is silently disabled regardless of the installed posthog version.
+try:
+    from chromadb.telemetry.product.posthog import Posthog as _ChromaPosthog
+
+    _ChromaPosthog._direct_capture = lambda self, event: None  # type: ignore[method-assign]
+except Exception:
+    pass
 
 MAX_RETRIES = 2
 CHROMA_DIR = "./chroma_db"
@@ -63,10 +80,15 @@ def _get_llm() -> ChatOpenAI:
     return ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 
+def _get_chroma_settings() -> Settings:
+    return Settings(anonymized_telemetry=False)
+
+
 def _get_retriever():
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    client = chromadb.PersistentClient(path=CHROMA_DIR, settings=_get_chroma_settings())
     vectorstore = Chroma(
-        persist_directory=CHROMA_DIR,
+        client=client,
         embedding_function=embeddings,
         collection_name="eu_ai_act",
     )

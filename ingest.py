@@ -16,12 +16,26 @@ import os
 import sys
 from pathlib import Path
 
+import chromadb
 import requests
+from chromadb.config import Settings
 from dotenv import load_dotenv
+from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+# Force-disable Chroma product telemetry globally for this process.
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+
+# Patch chromadb's posthog telemetry to silence API-incompatibility errors
+# (chromadb 0.5.x uses posthog's old 3-arg signature; posthog 3+ changed it).
+try:
+    from chromadb.telemetry.product.posthog import Posthog as _ChromaPosthog
+
+    _ChromaPosthog._direct_capture = lambda self, event: None  # type: ignore[method-assign]
+except Exception:
+    pass
 
 load_dotenv()
 
@@ -33,6 +47,10 @@ PDF_PATH = Path("./data/eu_ai_act.pdf")
 CHROMA_DIR = "./chroma_db"
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
+
+
+def get_chroma_settings() -> Settings:
+    return Settings(anonymized_telemetry=False)
 
 
 def download_pdf(url: str, dest: Path) -> None:
@@ -67,14 +85,14 @@ def build_vectorstore(pdf_path: Path, chroma_dir: str) -> None:
 
     print("🔢  Embedding chunks and building ChromaDB...")
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    client = chromadb.PersistentClient(path=chroma_dir, settings=get_chroma_settings())
 
-    vectorstore = Chroma.from_documents(
+    Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
-        persist_directory=chroma_dir,
+        client=client,
         collection_name="eu_ai_act",
     )
-    vectorstore.persist()
     print(f"✅  Vector store saved to {chroma_dir}  ({len(chunks)} vectors)")
 
 
