@@ -1,8 +1,8 @@
 # ⚖️ EU AI Act Compliance Intelligence Agent
 
-A production-grade **Adaptive RAG agent** built with **LangGraph** and **ChromaDB** that answers questions about the EU Artificial Intelligence Act using self-correcting retrieval, document grading, and hallucination detection.
+A portfolio-ready **Adaptive RAG agent** built with **LangGraph** and **ChromaDB** that answers questions about the EU Artificial Intelligence Act using self-correcting retrieval, document grading, and hallucination detection.
 
-> **Live Demo** · [Streamlit Cloud link here] &nbsp;|&nbsp; **API Docs** · `/docs` when running FastAPI
+> **Live Demo** · Not deployed yet (run locally) &nbsp;|&nbsp; **API Docs** · `/docs` when running FastAPI
 
 ---
 
@@ -80,9 +80,22 @@ The agent implements the **Adaptive + Corrective RAG** pattern — one of the mo
 ### 1. Clone & install
 
 ```bash
-git clone https://github.com/your-username/eu-ai-act-agent.git
-cd eu-ai-act-agent
-python -m venv venv && source venv/bin/activate
+git clone https://github.com/teman67/EU-AI-Act-Compliance-Intelligence-Agent.git
+cd EU-AI-Act-Compliance-Intelligence-Agent
+python -m venv .venv
+```
+
+PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+macOS/Linux:
+
+```bash
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -114,6 +127,23 @@ streamlit run streamlit_app.py
 ```bash
 uvicorn api:app --reload
 # API docs at http://localhost:8000/docs
+```
+
+### 6. Developer quality checks
+
+```bash
+pip install -r requirements-dev.txt
+ruff check .
+ruff format --check .
+mypy .
+pytest -q
+```
+
+Optional local hooks:
+
+```bash
+pre-commit install
+pre-commit run --all-files
 ```
 
 ---
@@ -171,8 +201,13 @@ eu-ai-act-agent/
 ├── ingest.py           # One-time vector store builder
 ├── api.py              # FastAPI REST API
 ├── streamlit_app.py    # Streamlit demo UI
+├── tests/              # Unit and API tests
+├── .github/workflows/  # CI pipeline
+├── pyproject.toml      # Ruff, Mypy, Pytest config
 ├── requirements.txt
-└── .env.example
+├── requirements-dev.txt
+└── LICENSE
+ 
 ```
 
 ---
@@ -183,13 +218,11 @@ eu-ai-act-agent/
 1. Push to GitHub
 2. Connect repo at [share.streamlit.io](https://share.streamlit.io)
 3. Add `OPENAI_API_KEY` and `TAVILY_API_KEY` in Streamlit secrets
-4. Note: Run `ingest.py` locally and commit `./chroma_db` to the repo (or use a hosted vector DB like Pinecone for production)
+4. Run `ingest.py` during your deploy flow and store vectors in a managed vector database for production use
 
 ### Docker
-```bash
-docker build -t eu-ai-act-agent .
-docker run -p 8501:8501 --env-file .env eu-ai-act-agent
-```
+
+Containerization is planned. This repository currently does not include a Dockerfile.
 
 ---
 
@@ -205,4 +238,4 @@ docker run -p 8501:8501 --env-file .env eu-ai-act-agent
 
 ## License
 
-MIT — free to use, modify, and deploy.
+MIT — see [LICENSE](LICENSE).
