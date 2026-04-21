@@ -1,5 +1,5 @@
 """
-streamlit_app.py — Interactive demo UI for the EU AI Act RAG agent.
+streamlit_app.py — Chat interface for the EU AI Act RAG agent.
 
 Run with:
     streamlit run streamlit_app.py
@@ -30,16 +30,6 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-    .main-header {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1a3c6e;
-    }
-    .sub-header {
-        color: #555;
-        font-size: 1rem;
-        margin-bottom: 1.5rem;
-    }
     .step-badge {
         background: #eef2ff;
         border-left: 3px solid #4f46e5;
@@ -49,18 +39,14 @@ st.markdown(
         font-size: 0.85rem;
         color: #312e81;
     }
-    .answer-box {
+    .source-badge {
         background: #f0fdf4;
-        border: 1px solid #bbf7d0;
-        border-radius: 8px;
-        padding: 16px;
-    }
-    .metric-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px;
-        text-align: center;
+        border-left: 3px solid #16a34a;
+        padding: 5px 12px;
+        border-radius: 4px;
+        margin: 3px 0;
+        font-size: 0.82rem;
+        color: #14532d;
     }
 </style>
 """,
@@ -82,7 +68,8 @@ with st.sidebar:
         "- 📋 Document relevance grading\n"
         "- 🌐 Web search fallback\n"
         "- 🛡️ Hallucination detection\n"
-        "- 🔄 Self-correcting retries"
+        "- 🔄 Self-correcting retries\n"
+        "- 📖 Source citation tracking"
     )
 
     st.divider()
@@ -99,9 +86,15 @@ with st.sidebar:
 
     for q in example_questions:
         if st.button(q, use_container_width=True, key=q):
-            st.session_state["question_input"] = q
+            st.session_state["pending_question"] = q
+            st.rerun()
 
     st.divider()
+
+    if st.button("🗑️ Clear conversation", use_container_width=True):
+        st.session_state["messages"] = []
+        st.rerun()
+
     st.markdown(
         "Built with [LangGraph](https://langchain-ai.github.io/langgraph/) · "
         "[ChromaDB](https://www.trychroma.com/) · "
@@ -110,7 +103,7 @@ with st.sidebar:
 
 
 # ---------------------------------------------------------------------------
-# Check prerequisites
+# Prerequisites check
 # ---------------------------------------------------------------------------
 def check_setup() -> bool:
     issues = []
@@ -125,93 +118,145 @@ def check_setup() -> bool:
     return True
 
 
-# ---------------------------------------------------------------------------
-# Main UI
-# ---------------------------------------------------------------------------
-st.markdown(
-    '<div class="main-header">⚖️ EU AI Act Compliance Intelligence</div>', unsafe_allow_html=True
-)
-st.markdown(
-    '<div class="sub-header">Ask anything about the EU Artificial Intelligence Act. '
-    "Powered by a self-correcting LangGraph RAG agent with adaptive retrieval.</div>",
-    unsafe_allow_html=True,
-)
-
 if not check_setup():
     st.stop()
 
 # Import agent only after setup check passes
 from agent.graph import rag_agent  # noqa: E402
 
-question = st.text_area(
-    "Your question:",
-    key="question_input",
-    placeholder="e.g. What obligations do providers of high-risk AI systems have?",
-    height=80,
+# ---------------------------------------------------------------------------
+# Header
+# ---------------------------------------------------------------------------
+st.markdown("# ⚖️ EU AI Act Compliance Intelligence")
+st.markdown(
+    "Ask anything about the EU Artificial Intelligence Act. "
+    "Powered by a self-correcting LangGraph RAG agent with adaptive retrieval and source citations."
 )
+st.divider()
 
-col1, col2 = st.columns([1, 5])
-with col1:
-    run = st.button("Ask Agent ▶", type="primary", use_container_width=True)
 
 # ---------------------------------------------------------------------------
-# Run agent
+# Agent runner
 # ---------------------------------------------------------------------------
-if run and question.strip():
-    with st.spinner("Agent is thinking..."):
-        start = time.perf_counter()
+def run_agent(question: str) -> tuple[dict, float]:
+    start = time.perf_counter()
+    initial_state = {
+        "question": question,
+        "generation": "",
+        "web_search": "No",
+        "documents": [],
+        "sources": [],
+        "steps": [],
+        "retries": 0,
+    }
+    result = rag_agent.invoke(initial_state)
+    latency = round(time.perf_counter() - start, 2)
+    return result, latency
 
-        initial_state = {
-            "question": question,
-            "generation": "",
-            "web_search": "No",
-            "documents": [],
-            "steps": [],
-            "retries": 0,
-        }
 
-        try:
-            result = rag_agent.invoke(initial_state)
-            latency = round(time.perf_counter() - start, 2)
+# ---------------------------------------------------------------------------
+# Message renderer
+# ---------------------------------------------------------------------------
+def render_assistant_message(msg: dict) -> None:
+    """Render assistant bubble: answer, metrics, reasoning steps, and citations."""
+    st.markdown(msg["content"])
 
-            # --- Metrics row ---
-            m1, m2, m3 = st.columns(3)
-            with m1:
-                st.metric("⏱️ Latency", f"{latency}s")
-            with m2:
-                st.metric("📄 Documents Used", len(result.get("documents", [])))
-            with m3:
-                web_used = result.get("web_search") == "Yes"
-                st.metric("🌐 Web Search", "Yes" if web_used else "No")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("⏱️ Latency", f"{msg.get('latency', 0)}s")
+    c2.metric("📄 Docs Used", msg.get("docs_used", 0))
+    c3.metric("🌐 Web Search", "Yes" if msg.get("web_search_used") else "No")
 
-            st.divider()
+    steps = msg.get("steps", [])
+    if steps:
+        with st.expander("🔍 Reasoning Steps"):
+            for step in steps:
+                st.markdown(
+                    f'<div class="step-badge">{step}</div>',
+                    unsafe_allow_html=True,
+                )
 
-            # --- Agent trace ---
-            with st.expander("🔍 Agent Reasoning Steps", expanded=True):
-                for step in result.get("steps", []):
+    sources = msg.get("sources", [])
+    if sources:
+        with st.expander(f"📖 Source Citations ({len(sources)})"):
+            for i, src in enumerate(sources, 1):
+                if src.get("source") == "web":
+                    url = src.get("url", "")
+                    title = src.get("title") or url or "Web result"
+                    link = f'<a href="{url}" target="_blank">{title}</a>' if url else title
                     st.markdown(
-                        f'<div class="step-badge">{step}</div>',
+                        f'<div class="source-badge">🌐 Chunk {i} — {link}</div>',
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    page = src.get("page")
+                    page_display = f"Page {page + 1}" if isinstance(page, int) else "Page unknown"
+                    st.markdown(
+                        f'<div class="source-badge">'
+                        f"📄 Chunk {i} — {page_display}"
+                        f" · EU AI Act (Official Journal L 2024/1689)"
+                        f"</div>",
                         unsafe_allow_html=True,
                     )
 
-            # --- Answer ---
-            st.markdown("### Answer")
-            st.markdown(
-                f'<div class="answer-box">{result.get("generation", "No answer generated.")}</div>',
-                unsafe_allow_html=True,
-            )
 
-            # --- Source chunks ---
-            docs = result.get("documents", [])
-            if docs:
-                with st.expander(f"📚 Source Chunks Used ({len(docs)})"):
-                    for i, doc in enumerate(docs, 1):
-                        st.markdown(f"**Chunk {i}:**")
-                        st.text(doc[:500] + ("..." if len(doc) > 500 else ""))
-                        st.divider()
+# ---------------------------------------------------------------------------
+# Chat history init
+# ---------------------------------------------------------------------------
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
 
-        except Exception as e:
-            st.error(f"Agent error: {e}")
+# Render existing conversation
+for msg in st.session_state["messages"]:
+    with st.chat_message(msg["role"], avatar="🧑" if msg["role"] == "user" else "⚖️"):
+        if msg["role"] == "user":
+            st.markdown(msg["content"])
+        else:
+            render_assistant_message(msg)
 
-elif run and not question.strip():
-    st.warning("Please enter a question.")
+# ---------------------------------------------------------------------------
+# Capture new question — sidebar button or typed input
+# ---------------------------------------------------------------------------
+question: str | None = None
+
+if "pending_question" in st.session_state:
+    question = st.session_state.pop("pending_question")
+
+if typed := st.chat_input("Ask anything about the EU AI Act..."):
+    question = typed
+
+# ---------------------------------------------------------------------------
+# Process question
+# ---------------------------------------------------------------------------
+if question:
+    # Display user message immediately
+    with st.chat_message("user", avatar="🧑"):
+        st.markdown(question)
+    st.session_state["messages"].append({"role": "user", "content": question})
+
+    # Run agent and render into assistant bubble
+    with st.chat_message("assistant", avatar="⚖️"):
+        with st.spinner("Agent is thinking..."):
+            try:
+                result, latency = run_agent(question)
+                assistant_msg: dict = {
+                    "role": "assistant",
+                    "content": result.get("generation", "No answer generated."),
+                    "steps": result.get("steps", []),
+                    "sources": result.get("sources", []),
+                    "web_search_used": result.get("web_search") == "Yes",
+                    "docs_used": len(result.get("documents", [])),
+                    "latency": latency,
+                }
+            except Exception as e:
+                assistant_msg = {
+                    "role": "assistant",
+                    "content": f"❌ Agent error: {e}",
+                    "steps": [],
+                    "sources": [],
+                    "web_search_used": False,
+                    "docs_used": 0,
+                    "latency": 0.0,
+                }
+        render_assistant_message(assistant_msg)
+
+    st.session_state["messages"].append(assistant_msg)

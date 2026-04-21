@@ -147,6 +147,7 @@ def query(request: QueryRequest, http_request: Request):
         "generation": "",
         "web_search": "No",
         "documents": [],
+        "sources": [],
         "steps": [],
         "retries": 0,
     }

@@ -11,6 +11,7 @@ class GraphState(TypedDict):
         generation: The LLM's generated answer.
         web_search: Whether a web search was triggered ("Yes" / "No").
         documents:  List of retrieved document chunks (as strings).
+        sources:    Metadata dicts for each retrieved chunk (page, source, etc.).
         steps:      Accumulated list of agent steps for tracing/UI display.
         retries:    Number of generation retry attempts made.
     """
@@ -19,5 +20,6 @@ class GraphState(TypedDict):
     generation: str
     web_search: str
     documents: list[str]
+    sources: list[dict]
     steps: Annotated[list[str], operator.add]
     retries: int

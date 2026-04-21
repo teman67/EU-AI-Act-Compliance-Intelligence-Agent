@@ -1,6 +1,11 @@
 # ⚖️ EU AI Act Compliance Intelligence Agent
 
-A portfolio-ready **Adaptive RAG agent** built with **LangGraph** and **ChromaDB** that answers questions about the EU Artificial Intelligence Act using self-correcting retrieval, document grading, and hallucination detection.
+![CI](https://github.com/teman67/EU-AI-Act-Compliance-Intelligence-Agent/actions/workflows/ci.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![LangGraph](https://img.shields.io/badge/LangGraph-0.2-purple)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+A portfolio-ready **Adaptive RAG agent** built with **LangGraph** and **ChromaDB** that answers questions about the EU Artificial Intelligence Act using self-correcting retrieval, document grading, hallucination detection, and **source citation tracking**.
 
 > **Live Demo** · Not deployed yet (run locally) &nbsp;|&nbsp; **API Docs** · `/docs` when running FastAPI
 
@@ -66,18 +71,31 @@ The agent implements the **Adaptive + Corrective RAG** pattern — one of the mo
 | Layer | Technology |
 |---|---|
 | Agent Orchestration | **LangGraph 0.2** |
-| LLM | **OpenAI GPT-4o-mini** |
+| LLM | **OpenAI GPT-5.4-mini** |
 | Embeddings | **OpenAI text-embedding-3-small** |
 | Vector Store | **ChromaDB** |
 | Web Search | **Tavily** |
 | Backend API | **FastAPI** |
-| Frontend Demo | **Streamlit** |
+| Frontend Demo | **Streamlit** (chat interface) |
+| Containerisation | **Docker / docker-compose** |
 
 ---
 
 ## Quickstart
 
-### 1. Clone & install
+### Docker (recommended)
+
+```bash
+# Build and run the Streamlit app
+docker compose up --build
+
+# App available at http://localhost:8501
+```
+
+> Before building, create a `.env` file with your API keys (see step 2).  
+> Run `python ingest.py` once to populate `./chroma_db`, then mount it into the container via `docker compose up`.
+
+### Manual setup
 
 ```bash
 git clone https://github.com/teman67/EU-AI-Act-Compliance-Intelligence-Agent.git
@@ -225,15 +243,11 @@ eu-ai-act-agent/
 
 ## Deployment
 
-### Streamlit Cloud (free)
+### Docker (Streamlit Cloud / free hosting)
 1. Push to GitHub
 2. Connect repo at [share.streamlit.io](https://share.streamlit.io)
 3. Add `OPENAI_API_KEY` and `TAVILY_API_KEY` in Streamlit secrets
 4. Run `ingest.py` during your deploy flow and store vectors in a managed vector database for production use
-
-### Docker
-
-Containerization is planned. This repository currently does not include a Dockerfile.
 
 ---
 
@@ -241,7 +255,7 @@ Containerization is planned. This repository currently does not include a Docker
 
 - **Swap ChromaDB for Pinecone or Weaviate** for a hosted vector store
 - **Add multi-document support** (upload national AI laws, GDPR, etc.)
-- **Add citation tracking** — return source page numbers with each answer
+- ~~**Add citation tracking**~~ ✅ Done — source page numbers returned with every answer
 - **Add conversation memory** using LangGraph's `MemorySaver` checkpointer
 - **Evaluate with RAGAS** — automated RAG evaluation pipeline
 

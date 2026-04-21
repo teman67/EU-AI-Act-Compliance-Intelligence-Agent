@@ -126,6 +126,7 @@ def retrieve(state: GraphState) -> dict[str, Any]:
     docs = retriever.invoke(state["question"])
     return {
         "documents": [doc.page_content for doc in docs],
+        "sources": [doc.metadata for doc in docs],
         "steps": ["🔍 Retrieved documents from vector store"],
     }
 
@@ -142,9 +143,15 @@ def web_search(state: GraphState) -> dict[str, Any]:
     web_docs = [r["content"] for r in results]
 
     # Merge with any existing documents (e.g. from a previous retrieve step)
-    existing = state.get("documents") or []
+    existing_docs = state.get("documents") or []
+    existing_sources = state.get("sources") or []
+    web_sources = [
+        {"url": r.get("url", ""), "title": r.get("title", ""), "source": "web"}
+        for r in results
+    ]
     return {
-        "documents": existing + web_docs,
+        "documents": existing_docs + web_docs,
+        "sources": existing_sources + web_sources,
         "web_search": "Yes",
         "steps": ["🌐 Fetched results via web search"],
     }
@@ -164,7 +171,10 @@ def grade_documents(state: GraphState) -> dict[str, Any]:
     chain = DOC_GRADER_PROMPT | llm
 
     relevant_docs = []
-    for doc in state["documents"]:
+    relevant_sources: list[dict] = []
+    sources = state.get("sources") or []
+
+    for i, doc in enumerate(state["documents"]):
         result = cast(
             GradeDocuments,
             chain.invoke(
@@ -176,6 +186,8 @@ def grade_documents(state: GraphState) -> dict[str, Any]:
         )
         if result.binary_score == "yes":
             relevant_docs.append(doc)
+            if i < len(sources):
+                relevant_sources.append(sources[i])
 
     trigger_web = "Yes" if len(relevant_docs) < 2 else "No"
     step = f"📋 Graded {len(state['documents'])} documents → " f"{len(relevant_docs)} relevant" + (
@@ -183,6 +195,7 @@ def grade_documents(state: GraphState) -> dict[str, Any]:
     )
     return {
         "documents": relevant_docs,
+        "sources": relevant_sources,
         "web_search": trigger_web,
         "steps": [step],
     }
