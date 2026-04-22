@@ -7,8 +7,8 @@
 
 A portfolio-ready **Adaptive RAG agent** built with **LangGraph** and **ChromaDB** that answers questions about the EU Artificial Intelligence Act using self-correcting retrieval, document grading, hallucination detection, and **source citation tracking**.
 
-> **Live Demo** · Not deployed yet (run locally) &nbsp;|&nbsp; **API Docs** · `/docs` when running FastAPI
-
+> &nbsp;|&nbsp; **API Docs** · `/docs` when running FastAPI
+## [Live Demo of the App](https://eu-ai-compliance-intelligence-a1039affa207.herokuapp.com/)
 ---
 
 ## Architecture
