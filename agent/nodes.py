@@ -50,7 +50,7 @@ CHROMA_DIR = "./chroma_db"
 class RouteQuery(BaseModel):
     """Router output — which data source to use."""
 
-    datasource: str = Field(description="'vectorstore' or 'web_search'")
+    datasource: str = Field(description="'vectorstore', 'web_search', or 'off_topic'")
 
 
 class GradeDocuments(BaseModel):
@@ -113,6 +113,30 @@ def route_question(state: GraphState) -> str:
     chain = ROUTER_PROMPT | llm
     result = cast(RouteQuery, chain.invoke({"question": state["question"]}))
     return result.datasource  # "vectorstore" or "web_search"
+
+
+# ---------------------------------------------------------------------------
+# Node: handle_off_topic
+# ---------------------------------------------------------------------------
+
+
+def handle_off_topic(state: GraphState) -> dict[str, Any]:
+    """Return a greeting for salutations, or a polite refusal for unrelated questions."""
+    greetings = {"hi", "hello", "hey", "hiya", "howdy", "greetings", "sup", "yo"}
+    normalized = state["question"].strip().lower().rstrip("!.,?")
+    if normalized in greetings:
+        return {
+            "generation": "Hi! 👋 How can I help you with the EU AI Act today?",
+            "steps": ["👋 Greeting detected"],
+        }
+    return {
+        "generation": (
+            "I can only answer questions about the EU Artificial Intelligence Act "
+            "and related AI regulation topics. Please ask me something about the Act, "
+            "such as its risk categories, obligations, prohibited practices, or definitions."
+        ),
+        "steps": ["🚫 Question is off-topic — not related to the EU AI Act"],
+    }
 
 
 # ---------------------------------------------------------------------------

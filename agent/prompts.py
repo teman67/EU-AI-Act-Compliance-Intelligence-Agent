@@ -17,7 +17,10 @@ Route the user question to the most appropriate data source:
 - 'web_search' → questions about recent news, implementation updates after 2024,
   national transposition laws, or enforcement decisions not covered in the document.
 
-Return ONLY the single word: 'vectorstore' or 'web_search'. No other text.""",
+- 'off_topic' → greetings, small talk, questions unrelated to AI regulation, or
+  anything that has nothing to do with the EU AI Act or AI policy.
+
+Return ONLY one of these three words: 'vectorstore', 'web_search', or 'off_topic'. No other text.""",
         ),
         ("human", "Question: {question}"),
     ]

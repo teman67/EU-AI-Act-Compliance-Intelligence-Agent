@@ -41,6 +41,7 @@ from agent.nodes import (
     generate,
     grade_documents,
     grade_generation,
+    handle_off_topic,
     increment_retries,
     retrieve,
     route_question,
@@ -62,6 +63,7 @@ def build_graph():
     graph.add_node("grade_documents", grade_documents)
     graph.add_node("generate", generate)
     graph.add_node("increment_retries", increment_retries)
+    graph.add_node("handle_off_topic", handle_off_topic)
 
     # ------------------------------------------------------------------
     # Entry point: conditional routing from START
@@ -72,8 +74,14 @@ def build_graph():
         {
             "vectorstore": "retrieve",
             "web_search": "web_search_node",
+            "off_topic": "handle_off_topic",
         },
     )
+
+    # ------------------------------------------------------------------
+    # Off-topic questions go straight to END
+    # ------------------------------------------------------------------
+    graph.add_edge("handle_off_topic", END)
 
     # ------------------------------------------------------------------
     # After retrieval → grade documents
