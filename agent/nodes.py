@@ -146,8 +146,7 @@ def web_search(state: GraphState) -> dict[str, Any]:
     existing_docs = state.get("documents") or []
     existing_sources = state.get("sources") or []
     web_sources = [
-        {"url": r.get("url", ""), "title": r.get("title", ""), "source": "web"}
-        for r in results
+        {"url": r.get("url", ""), "title": r.get("title", ""), "source": "web"} for r in results
     ]
     return {
         "documents": existing_docs + web_docs,
