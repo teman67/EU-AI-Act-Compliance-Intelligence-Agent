@@ -7,7 +7,8 @@ __pycache__/
 
 # Data & vector store
 data/*.pdf
-chroma_db/
+# chroma_db/ is intentionally committed so the pre-built vector store
+# is available on Heroku (ephemeral filesystem — cannot be built at runtime)
 
 # IDE
 .vscode/
