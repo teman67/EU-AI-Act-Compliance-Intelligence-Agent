@@ -92,7 +92,7 @@ def _get_retriever():
         embedding_function=embeddings,
         collection_name="eu_ai_act",
     )
-    return vectorstore.as_retriever(search_kwargs={"k": 4})
+    return vectorstore.as_retriever(search_kwargs={"k": 8})
 
 
 def _get_web_search_tool():
@@ -280,8 +280,10 @@ def grade_generation(state: GraphState) -> str:
     if hall_result.binary_score == "no":
         if retries < MAX_RETRIES:
             return "regenerate"
-        # Avoid infinite loop: don't fall back to web_search when retries exhausted
-        return "useful"  # accept best-effort after max retries
+        # Retries exhausted — escalate to web search if not yet attempted.
+        if state.get("web_search") != "Yes":
+            return "web_search"
+        return "useful"  # web search already done, accept best-effort
 
     # --- Answer quality check ---
     ans_grader = ANSWER_GRADER_PROMPT | llm.with_structured_output(GradeAnswer)
