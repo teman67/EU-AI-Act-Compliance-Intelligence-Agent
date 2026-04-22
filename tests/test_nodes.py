@@ -10,6 +10,11 @@ from agent.state import GraphState
 @dataclass
 class FakeDoc:
     page_content: str
+    metadata: dict = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        if self.metadata is None:
+            self.metadata = {}
 
 
 class PassthroughPrompt:
@@ -56,6 +61,7 @@ def test_retrieve_maps_docs_to_text(monkeypatch) -> None:
     result = nodes.retrieve(make_state())
 
     assert result["documents"] == ["doc-a", "doc-b"]
+    assert result["sources"] == [{}, {}]
     assert result["steps"] == ["🔍 Retrieved documents from vector store"]
 
 
