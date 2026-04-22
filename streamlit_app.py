@@ -189,6 +189,19 @@ def render_assistant_message(msg: dict) -> None:
 
     sources = msg.get("sources", [])
     if sources:
+        # Deduplicate sources by (source-type, url/page) key
+        seen: set = set()
+        unique_sources = []
+        for src in sources:
+            if src.get("source") == "web":
+                key = ("web", src.get("url", ""))
+            else:
+                key = ("doc", src.get("page", ""))
+            if key not in seen:
+                seen.add(key)
+                unique_sources.append(src)
+        sources = unique_sources
+    if sources:
         with st.expander(f"📖 Source Citations ({len(sources)})"):
             for i, src in enumerate(sources, 1):
                 if src.get("source") == "web":
@@ -245,7 +258,8 @@ if question:
         st.markdown(question)
     st.session_state["messages"].append({"role": "user", "content": question})
 
-    # Run agent and render into assistant bubble
+    # Run agent inside a spinner; append result to session state and rerun so
+    # the messages loop is the single render path (prevents double rendering).
     with st.chat_message("assistant", avatar="⚖️"):
         with st.spinner("Agent is thinking..."):
             try:
@@ -269,6 +283,6 @@ if question:
                     "docs_used": 0,
                     "latency": 0.0,
                 }
-        render_assistant_message(assistant_msg)
 
     st.session_state["messages"].append(assistant_msg)
+    st.rerun()
