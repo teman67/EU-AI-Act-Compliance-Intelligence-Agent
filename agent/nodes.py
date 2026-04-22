@@ -280,7 +280,8 @@ def grade_generation(state: GraphState) -> str:
     if hall_result.binary_score == "no":
         if retries < MAX_RETRIES:
             return "regenerate"
-        return "web_search"  # fallback after max retries
+        # Avoid infinite loop: don't fall back to web_search when retries exhausted
+        return "useful"  # accept best-effort after max retries
 
     # --- Answer quality check ---
     ans_grader = ANSWER_GRADER_PROMPT | llm.with_structured_output(GradeAnswer)
@@ -297,7 +298,9 @@ def grade_generation(state: GraphState) -> str:
     if ans_result.binary_score == "yes":
         return "useful"
 
-    if retries < MAX_RETRIES:
+    # Avoid infinite loop: web_search retries don't increment the counter, so
+    # only attempt a web search fallback if we haven't already fetched web results.
+    if retries < MAX_RETRIES and state.get("web_search") != "Yes":
         return "web_search"
 
     return "useful"  # accept best-effort after max retries

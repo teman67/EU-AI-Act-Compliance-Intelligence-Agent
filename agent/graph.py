@@ -127,4 +127,8 @@ def build_graph():
 
 
 # Compile once at module level for import
+# recursion_limit is raised from the default of 25 to give the corrective-RAG
+# loop (retrieve → grade → generate → grade → web_search → generate) enough
+# headroom while still providing a safety-net against runaway loops.
 rag_agent = build_graph()
+rag_agent = rag_agent.with_config({"recursion_limit": 10})

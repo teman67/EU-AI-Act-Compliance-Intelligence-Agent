@@ -260,29 +260,28 @@ if question:
 
     # Run agent inside a spinner; append result to session state and rerun so
     # the messages loop is the single render path (prevents double rendering).
-    with st.chat_message("assistant", avatar="⚖️"):
-        with st.spinner("Agent is thinking..."):
-            try:
-                result, latency = run_agent(question)
-                assistant_msg: dict = {
-                    "role": "assistant",
-                    "content": result.get("generation", "No answer generated."),
-                    "steps": result.get("steps", []),
-                    "sources": result.get("sources", []),
-                    "web_search_used": result.get("web_search") == "Yes",
-                    "docs_used": len(result.get("documents", [])),
-                    "latency": latency,
-                }
-            except Exception as e:
-                assistant_msg = {
-                    "role": "assistant",
-                    "content": f"❌ Agent error: {e}",
-                    "steps": [],
-                    "sources": [],
-                    "web_search_used": False,
-                    "docs_used": 0,
-                    "latency": 0.0,
-                }
+    with st.chat_message("assistant", avatar="⚖️"), st.spinner("Agent is thinking..."):
+        try:
+            result, latency = run_agent(question)
+            assistant_msg: dict = {
+                "role": "assistant",
+                "content": result.get("generation", "No answer generated."),
+                "steps": result.get("steps", []),
+                "sources": result.get("sources", []),
+                "web_search_used": result.get("web_search") == "Yes",
+                "docs_used": len(result.get("documents", [])),
+                "latency": latency,
+            }
+        except Exception as e:
+            assistant_msg = {
+                "role": "assistant",
+                "content": f"❌ Agent error: {e}",
+                "steps": [],
+                "sources": [],
+                "web_search_used": False,
+                "docs_used": 0,
+                "latency": 0.0,
+            }
 
     st.session_state["messages"].append(assistant_msg)
     st.rerun()
