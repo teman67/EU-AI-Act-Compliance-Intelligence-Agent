@@ -100,7 +100,21 @@ with st.sidebar:
         "[ChromaDB](https://www.trychroma.com/) · "
         "[OpenAI](https://openai.com/)"
     )
-
+    
+    st.markdown(
+        "Source code: "
+        "[GitHub](https://github.com/teman67/EU-AI-Act-Compliance-Intelligence-Agent)"
+        
+    )
+       
+    st.markdown(
+        "Developer: [Amirhossein Bayani](https://www.linkedin.com/in/amirhosseinbayani/)"
+    )
+    
+    st.markdown(
+        "Disclaimer: This agent provides general information about the EU AI Act but does not constitute legal advice. "
+        "For specific compliance questions, consult a qualified legal professional."
+    )
 
 # ---------------------------------------------------------------------------
 # Prerequisites check
