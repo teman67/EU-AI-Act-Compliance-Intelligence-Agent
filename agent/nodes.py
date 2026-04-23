@@ -6,6 +6,7 @@ state updates to merge back in.
 """
 
 import os
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, cast
 
 import chromadb
@@ -193,21 +194,22 @@ def grade_documents(state: GraphState) -> dict[str, Any]:
     llm = _get_llm().with_structured_output(GradeDocuments)
     chain = DOC_GRADER_PROMPT | llm
 
+    sources = state.get("sources") or []
+    question = state["question"]
+
+    def _grade_one(args: tuple[int, str]) -> tuple[int, bool]:
+        i, doc = args
+        result = cast(GradeDocuments, chain.invoke({"document": doc, "question": question}))
+        return i, result.binary_score == "yes"
+
+    indexed_docs = list(enumerate(state["documents"]))
+    with ThreadPoolExecutor(max_workers=min(8, len(indexed_docs) or 1)) as pool:
+        grades = dict(pool.map(_grade_one, indexed_docs))
+
     relevant_docs = []
     relevant_sources: list[dict] = []
-    sources = state.get("sources") or []
-
-    for i, doc in enumerate(state["documents"]):
-        result = cast(
-            GradeDocuments,
-            chain.invoke(
-                {
-                    "document": doc,
-                    "question": state["question"],
-                }
-            ),
-        )
-        if result.binary_score == "yes":
+    for i, doc in indexed_docs:
+        if grades[i]:
             relevant_docs.append(doc)
             if i < len(sources):
                 relevant_sources.append(sources[i])
